@@ -1,0 +1,11 @@
+ofxBoost1.81
+ofxOpenCv
+ofxCv
+ofxImGui
+ofxOsc
+ofxMidi
+ofxFutilities
+ofxHAPAVPlayer
+ofxImNode
+ofxImPlot
+ofxNetwork
