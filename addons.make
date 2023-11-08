@@ -8,4 +8,5 @@ ofxFutilities
 ofxHAPAVPlayer
 ofxImNode
 ofxImPlot
+ofxNDI
 ofxNetwork

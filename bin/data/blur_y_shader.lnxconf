@@ -1,0 +1,58 @@
+22 serialization::archive 19 0 0 6 blur_y 469 // vert shader
+
+#version 150
+
+// these are for the programmable pipeline system
+uniform mat4 modelViewProjectionMatrix;
+uniform mat4 textureMatrix;
+
+in vec4 position;
+in vec2 texcoord;
+in vec4 normal;
+in vec4 color;
+
+out vec2 texCoordVarying;
+
+void main()
+{
+#ifdef INTEL_CARD
+    color = vec4(1.0); // for intel HD cards
+    normal = vec4(1.0); // for intel HD cards
+#endif
+    
+    texCoordVarying = texcoord;
+    gl_Position = modelViewProjectionMatrix * position;
+}
+ 0  1109 // fragment shader
+
+#version 150
+
+uniform sampler2DRect tex0;
+
+uniform float u_amount;
+
+in vec2 texCoordVarying;
+out vec4 outputColor;
+
+// Gaussian weights from http://dev.theomader.com/gaussian-kernel-calculator/
+
+void main()
+{
+    
+    vec4 color = vec4(0.0, 0.0, 0.0, 0.0);
+    
+    color += 0.0001338302 * texture(tex0, texCoordVarying + vec2(0.0, u_amount * 4.0));
+    color += 0.0044318484 * texture(tex0, texCoordVarying + vec2(0.0, u_amount * 3.0));
+    color += 0.0539909665 * texture(tex0, texCoordVarying + vec2(0.0, u_amount * 2.0));
+    color += 0.2419707245 * texture(tex0, texCoordVarying + vec2(0.0, u_amount * 1.0));
+    
+    color += 0.3989422804 * texture(tex0, texCoordVarying + vec2(0.0, 0.0));
+    
+    color += 0.2419707245 * texture(tex0, texCoordVarying + vec2(0.0, u_amount * -1.0));
+    color += 0.0539909665 * texture(tex0, texCoordVarying + vec2(0.0, u_amount * -2.0));
+    color += 0.0044318484 * texture(tex0, texCoordVarying + vec2(0.0, u_amount * -3.0));
+    color += 0.0001338302 * texture(tex0, texCoordVarying + vec2(0.0, u_amount * -4.0));
+    
+    outputColor = color;
+}
+

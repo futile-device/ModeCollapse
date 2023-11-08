@@ -1,28 +1,75 @@
 #include "ofApp.h"
 
-int catIDX = 0;
+
 //--------------------------------------------------------------
 void ofApp::setup(){
-    ofSetVerticalSync(true);
-    global::model.setup(true);
     
+    ofSetBackgroundColor(0);
+    ofSetVerticalSync(true);
+    
+    fu::SetLogLevel(FU_DEBUG);
+    fu::SetLogWithTime(true);
+    
+    
+    
+    blurEffect.setup(640, 420);
+    blurEffect.setName("Blur FX");
+    blurEffect.setParameters(4,4);
+    
+    
+    imageFbo.allocate(640, 420, GL_RGBA);
+    
+    
+    global::model.setup(true);
+    global::model.midiReceiver.setup("MPK mini 3");
+    
+    ndi.setup("ModeCollapseNDI", 1920 * 3, 1080);
+    
+    fu::setupGui();
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
 
+    global::model.midiReceiver.update();
+    
+    ofDisableArbTex();
+    
+    fu::gui.begin();
+    {
+        
+        ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
 
+        ImGui::Begin("ModeCollapse");
+        ImGui::PushID("ModeCollapse");
+        {
+            ImGuiContext& g = *GImGui;
+            ImGuiIO& io = g.IO;
+            ImGui::Text("FPS %.3f ms/f (%.1f fps", 1000.0f / io.Framerate, io.Framerate);
+            
+            ndi.gui();
+            
+            global::model.midiReceiver.gui(false);
+            
+            fu::Console.gui();
+        }
+        ImGui::PopID();
+        ImGui::End();
+        
+    }
+    fu::gui.end();
+    
+    ofEnableArbTex();
     
 }
 
-COCOImage* currentCocoImage = nullptr;
-vector<ofRectangle> bboxs;
-vector<ofMesh> meshes;
-vector<string> cats;
-ostringstream os;
-bool bLoadNext = true;
+
+
 //--------------------------------------------------------------
 void ofApp::draw(){
+    
+    
+    
     
     if(bLoadNext){
         
@@ -55,26 +102,66 @@ void ofApp::draw(){
         os << category << " " << idx << " of " << images.size() << " =?= " << endl;
         
     }
+
     
-    ofSetColor(255);
     if(currentCocoImage != nullptr) {
-        currentCocoImage->img.draw(0, 0);
-        ofNoFill();
-        for(int i = 0; i < bboxs.size(); ++i){
-            ofDrawRectangle(bboxs[i]);
-            meshes[i].draw();
-            ofDrawBitmapString(cats[i], bboxs[i].x, bboxs[i].y);
+        
+        imageFbo.begin();
+        {
+            ofPushMatrix();
+            ofPushStyle();
+//            ofClear(0);
+//            ofFill();
+            ofSetColor(255);
+            
+            currentCocoImage->img.draw(0, 0);
+            ofPopMatrix();
+            ofPopStyle();
         }
+        imageFbo.end();
+        
+        blurEffect.process(imageFbo);
+        
+        ofFbo& renderFbo = ndi.getRender();
+        renderFbo.begin();
+        {
+            blurEffect.getRender().draw(0, 0);
+            imageFbo.draw(640, 0);
+            ofNoFill();
+            for(int i = 0; i < bboxs.size(); ++i){
+                ofDrawRectangle(bboxs[i]);
+                meshes[i].draw();
+                ofDrawBitmapString(cats[i], bboxs[i].x, bboxs[i].y);
+            }
+        }
+        renderFbo.end();
+        ndi.publish();
+//        renderFbo.draw(0,0);
+
     }
-    ofDrawBitmapString(os.str().c_str(), 20, ofGetHeight() - 20);
+//    ofDrawBitmapString(os.str().c_str(), 20, ofGetHeight() - 20);
+    
+    fu::gui.draw();
     
 }
 
 //--------------------------------------------------------------
+void ofApp::exit(){
+    fu::gui.exit();
+}
+
+//--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-    catIDX++;
-    if(catIDX == global::model.cocoActualCategories.size()) catIDX = 0;
-    bLoadNext = true;
+    
+//    if(key == 'f') renderApp->toggleFullScreen();
+//    if(key == 'v') renderApp->toggleVerticalSync();
+    
+    if(key == ' '){
+        catIDX++;
+        if(catIDX == global::model.cocoActualCategories.size()) catIDX = 0;
+        bLoadNext = true;
+    }
+
 }
 
 //--------------------------------------------------------------

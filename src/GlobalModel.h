@@ -152,6 +152,10 @@ public:
     map< int, vector<COCOAnnotation> > cocoAnnotationsByImageIDX;
     map< string, vector<COCOImage*> > cocoImagesByCategoryIDX;
     
+    
+    fu::MIDI::Receiver midiReceiver;
+    
+    
 //    friend class boost::serialization::access;
 //
 //    template<class Archive>

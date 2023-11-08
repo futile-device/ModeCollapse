@@ -1,9 +1,11 @@
 #pragma once
 
+#define USE_NDI 1
+
 #include "ofMain.h"
 #include "ofxFutilities.h"
-
 #include "GlobalModel.h"
+//#include "RenderApp.h"
 
 class ofApp : public ofBaseApp{
 
@@ -24,6 +26,26 @@ public:
     void windowResized(int w, int h);
     void dragEvent(ofDragInfo dragInfo);
     void gotMessage(ofMessage msg);
+    void exit();
+    
+    fu::NDIOutput ndi;
+    
+    
+    fu::BlurEffect blurEffect;
+    ofFbo imageFbo;
+    ofFbo renderFbo;
+    
+    
+    COCOImage* currentCocoImage = nullptr;
+    vector<ofRectangle> bboxs;
+    vector<ofMesh> meshes;
+    vector<string> cats;
+    ostringstream os;
+    int catIDX = 0;
+    bool bLoadNext = true;
+    
+    
+//    shared_ptr<RenderApp> renderApp;
     
 };
 
